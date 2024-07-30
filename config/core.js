@@ -123,7 +123,7 @@ function renderViewTable(dv, view_name) {
     ["", "Name", "Description", "Tags", "URL", "Created date", "Modified date"],
     dv
       .pages(`"${THINGS_PATH}"`)
-      .where((file) => viewMatchesTags(file.tags, view_name))
+      .where((file) => viewMatchesTags(view_name, file.tags))
       .sort((file) => file.file.name)
       .map((file) => {
         const icon = `![|16x16](${file.icon})`;
