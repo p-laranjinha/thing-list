@@ -1,6 +1,6 @@
 {
-  "hidden": false,
+  "hidden": true,
   "hiddenList": [
-    "Configs"
+    "config"
   ]
 }
