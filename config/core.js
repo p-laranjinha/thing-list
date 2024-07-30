@@ -1,9 +1,27 @@
-// `app` is the Obsidian private API.
-// May break in future versions but it's way more useful than the public API.
-// The following line does nothing, it's here to signify that it exists.
-app = app;
+/* INFO:
+ *  The views in these scripts are the markdown files in the `VIEWS_PATH`
+ * directory, which by default is "Views".
+ *  A view name is the file name of a view without the ".md" suffix.
+ *  The tags in this script are the Obsidian tags, which start with
+ * a "#" and can't include " ".
+ *  As tags can't include " " and view names can't include "/" these are
+ * replaced so that all "/" in tags are now represented by " " in view names.
+ *  An initiated view is a view with an existing file, while an uninitiated
+ * view is a view which we know can exist (has tags or custom views) but
+ * their file hasn't been created yet.
+ *  `app` is the Obsidian private API, which may break in future obsidian
+ * versions but it's way more useful than the public API.
+ *  The scripts are using CommonJS so that cyclic dependencies and JSDoc
+ * work as expected, with the Modules plugin.
+ */
 
-const { VIEWS_PATH, CUSTOM_VIEWS, CUSTOM_TAGS } = require("./user.js");
+const {
+  VIEWS_PATH,
+  THINGS_PATH,
+  MERGE_VIEWS_IN_LIST,
+  CUSTOM_VIEWS,
+  CUSTOM_TAGS,
+} = require("./user.js");
 
 /**
  * @typedef CustomViews
@@ -36,31 +54,75 @@ const CORE_CUSTOM_VIEWS = {
     return true;
   },
 };
+module.exports.CORE_CUSTOM_VIEWS = CORE_CUSTOM_VIEWS;
 
 /**
  * @typedef CustomTags
  * @type {Object.<string, (view_name: string) => boolean}
  * Tags where you can set in which views the thing is allowed to appear.
  * Views still need to match the thing for it to appear.
- * The key is a string with the tag.
+ * The key is a string with the tag without a "#".
  * The value is a function to check if a tag belongs to a view.
  */
 /** @type {CustomTags} */
 const CORE_CUSTOM_TAGS = {
   Archive: (view_name) => view_name === "Archive",
 };
+module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
 
 /**
- * Returns a Dataview plugin table with all the things for a view.
+ * Renders a list with all views.
+ * @param dv The Dataview plugin's API.
+ * @param {string[]} pinned_view_names All the views to be pinned to the top.
+ */
+function renderViewsList(dv, pinned_view_names) {
+  for (const name of pinned_view_names) {
+    dv.paragraph(`[[${VIEWS_PATH}/${name} | 🖈 ${name.replace(" ", "/")}]]`);
+  }
+  let view_names = getAllViews();
+  view_names = [...view_names.initiated, ...view_names.uninitiated];
+  if (MERGE_VIEWS_IN_LIST) {
+    view_names = view_names.sort();
+  }
+  for (const name of view_names) {
+    if (pinned_view_names.includes(name)) {
+      continue;
+    }
+    dv.paragraph(`[[${VIEWS_PATH}/${name} | ${name.replace(" ", "/")}]]`);
+  }
+}
+module.exports.renderViewsList = renderViewsList;
+
+/**
+ * Renders a button using the Dataview plugin to create a new thing.
+ * @param dv The Dataview plugin's API.
+ * @param {string} [button_text="Add Thing"] The text content of the button.
+ */
+function renderAddThingButton(dv, button_text = "Add Thing") {
+  /** @type {HTMLButtonElement} */
+  const button = dv.el("button", button_text);
+  button.addEventListener("click", async () => {
+    try {
+      await app.vault.create(THINGS_PATH + "/Untitled.md", "");
+    } catch {
+      alert("Thing already exists.");
+    }
+    const new_thing = app.vault.getFileByPath(THINGS_PATH + "/Untitled.md");
+    app.workspace.activeLeaf.openFile(new_thing);
+  });
+}
+module.exports.renderAddThingButton = renderAddThingButton;
+
+/**
+ * Renders a Dataview plugin table with all the things for a view.
  * @param dv The Dataview plugin's API.
  * @param {string} view_name The name of the view.
- * @returns A Dataview plugin table.
  */
-function getViewTable(dv, view_name) {
-  return dv.table(
-    ["", "Name", "Description", "Tags", "URL"],
+function renderViewTable(dv, view_name) {
+  dv.table(
+    ["", "Name", "Description", "Tags", "URL", "Created date", "Modified date"],
     dv
-      .pages('"DB"')
+      .pages(`"${THINGS_PATH}"`)
       .where((file) => viewMatchesTags(file.tags, view_name))
       .sort((file) => file.file.name)
       .map((file) => {
@@ -75,10 +137,45 @@ function getViewTable(dv, view_name) {
           }, "");
         }
         const url = file.url;
-        return [icon, name, description, tags, url];
+        const created_date = file.ctime;
+        const modified_date = file.mtime;
+        return [
+          icon,
+          name,
+          description,
+          tags,
+          url,
+          created_date,
+          modified_date,
+        ];
       }),
   );
 }
+module.exports.renderViewTable = renderViewTable;
+
+/**
+ * Renders an icon/image using the Dataview plugin.
+ * @param dv The Dataview plugin's API.
+ * @param {string} [icon_link=undefined]
+ * @param {string} [width="32px"]
+ * @param {string} [height="32px"]
+ */
+function renderIcon(
+  dv,
+  icon_link = undefined,
+  width = "32px",
+  height = "32px",
+) {
+  if (icon_link === undefined) {
+    icon_link = dv.current().icon;
+  }
+  if (icon_link) {
+    dv.span(
+      `<img src="${icon_link}" style="width:${width};height:${height}"></img>`,
+    );
+  }
+}
+module.exports.renderIcon = renderIcon;
 
 /**
  * Checks if view matches the tags.
@@ -122,6 +219,7 @@ function viewMatchesTags(view_name, tag_names) {
 
   return regularViewMatchesTags(view_name, tag_names);
 }
+module.exports.viewMatchesTags = viewMatchesTags;
 
 /**
  * Checks if a regular (not custom) view matches at least one tag.
@@ -160,16 +258,55 @@ function regularViewMatchesTags(view_name, tag_names) {
   }
   return false;
 }
+module.exports.regularViewMatchesTags = regularViewMatchesTags;
 
 /**
- * @returns {string[]} A list of all tags names without the "#" prefix.
+ * @returns {{initiated: string[], uninitiated: string[]}} The names of all initiated and uninitiated views.
  */
-function getAllTagNames() {
+function getAllViews() {
+  const initiated_view_names = getInitiatedViewNames().sort();
+
+  let uninitiated_view_names = [];
+  const existing_tag_names = getExistingTagNames();
+  const user_custom_view_names = Object.keys(CUSTOM_VIEWS);
+  const core_custom_view_names = Object.keys(CORE_CUSTOM_VIEWS);
+  const user_custom_tag_names = Object.keys(CUSTOM_TAGS);
+  const core_custom_tag_names = Object.keys(CORE_CUSTOM_TAGS);
+  const possible_uninitiated_view_name_arrays = [
+    existing_tag_names.map((name) => name.replace("/", " ")),
+    user_custom_view_names,
+    core_custom_view_names,
+    user_custom_tag_names.map((name) => name.replace("/", " ")),
+    core_custom_tag_names.map((name) => name.replace("/", " ")),
+  ];
+  for (const array of possible_uninitiated_view_name_arrays) {
+    for (const name of array) {
+      if (
+        !uninitiated_view_names.includes(name) &&
+        !initiated_view_names.includes(name)
+      ) {
+        uninitiated_view_names.push(name);
+      }
+    }
+  }
+  uninitiated_view_names = uninitiated_view_names.sort();
+  return {
+    initiated: initiated_view_names,
+    uninitiated: uninitiated_view_names,
+  };
+}
+module.exports.getAllViews = getAllViews;
+
+/**
+ * @returns {string[]} A list of all regular (not custom) tag names without the "#" prefix.
+ */
+function getExistingTagNames() {
   const tag_counts = app.metadataCache.getTags();
   const tag_names_with_hashtag = Object.keys(tag_counts);
   const tag_names = tag_names_with_hashtag.map((tag) => tag.slice(1));
   return tag_names;
 }
+module.exports.getExistingTagNames = getExistingTagNames;
 
 /**
  * @returns {string[]} A list of the filenames of the views without the ".md" extension.
@@ -180,10 +317,4 @@ function getInitiatedViewNames() {
   const views = view_files.map((file) => file.basename);
   return views;
 }
-
-// Using CommonJS so that cyclic dependencies work
-module.exports = {
-  viewMatchesTags: regularViewMatchesTags,
-  getAllTags: getAllTagNames,
-  getInitiatedViewNames,
-};
+module.exports.getInitiatedViewNames = getInitiatedViewNames;

@@ -1,6 +1,6 @@
 {
   "livePreview": false,
-  "vimMode": true,
+  "vimMode": false,
   "readableLineLength": false,
   "showUnsupportedFiles": true
 }
