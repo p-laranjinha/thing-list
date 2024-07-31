@@ -116,9 +116,12 @@ module.exports.renderAddThingButton = renderAddThingButton;
 /**
  * Renders a Dataview plugin table with all the things for a view.
  * @param dv The Dataview plugin's API.
- * @param {string} view_name The name of the view.
+ * @param {string} [view_name=undefined] The name of the view.
  */
-function renderViewTable(dv, view_name) {
+function renderViewTable(dv, view_name = undefined) {
+  if (view_name === undefined) {
+    view_name = dv.current().file.name;
+  }
   dv.table(
     ["", "Name", "Description", "Tags", "URL", "Created date", "Modified date"],
     dv
