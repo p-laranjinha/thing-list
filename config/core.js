@@ -1,18 +1,54 @@
 /* INFO:
- *  The views in these scripts are the markdown files in the `VIEWS_PATH`
- * directory, which by default is "Views".
- *  A view name is the file name of a view without the ".md" suffix.
- *  The tags in this script are the Obsidian tags, which start with
- * a "#" and can't include " ".
- *  As tags can't include " " and view names can't include "/" these are
- * replaced so that all "/" in tags are now represented by " " in view names.
- *  An initiated view is a view with an existing file, while an uninitiated
- * view is a view which we know can exist (has tags or custom views) but
- * their file hasn't been created yet.
- *  `app` is the Obsidian private API, which may break in future obsidian
- * versions but it's way more useful than the public API.
- *  The scripts are using CommonJS so that cyclic dependencies and JSDoc
- * work as expected, with the Modules plugin.
+ * Views can find all things in the specified folder as well as any subfolders
+ *  inside said specified folder.
+ * `app` is the Obsidian private API, which may break in future obsidian
+ *  versions but it's way more useful than the public API.
+ * The scripts are using CommonJS so that cyclic dependencies and JSDoc
+ *  work as expected, with the Modules plugin.
+ */
+
+/**
+ * @typedef ViewName
+ * @type {string}
+ * The path and name of a view file inside the `VIEWS_PATH` folder (which by
+ *  default is "Views"), without the ".md" extension.
+ * The path has its root inside the `VIEWS_PATH` folder, meaning that it isn't
+ *  included in the path.
+ * Regular `ViewName` are `TagName` with the tag's "/" replaced by " ",
+ *  because tags can't contain " " so there is no risk of confusion, and in
+ *  view names the "/" are the separation between subfolders in the path.
+ * If a `ViewName` starts with "/" it means that it only appears on the
+ *  specified location, be it root or subfolder.
+ * If a `ViewName` doesn't start with "/" it means that it appears on all
+ *  locations ending with the `ViewName`, meaning on root and every subfolder
+ *  if no subfolder is specified, or every subfolder with the same name if a
+ *  subfolder is specified.
+ */
+
+/**
+ * @typedef TagName
+ * @type {string}
+ * An Obsidian tag without the "#" prefix.
+ * These tags can't contain " " and use "/" to show subtags.
+ */
+
+/**
+ * @typedef CustomViews
+ * @type {Object.<ViewName, (tag_names: TagName[]) => boolean>}
+ * Views where you can set what things they will try to show.
+ * Matching things can be excluded from a view by using `CustomTags`.
+ * The keys are `ViewName`s, and can either replace a regular view or be
+ *  something completely new.
+ * The values are functions to check if a thing belongs to the view.
+ */
+
+/**
+ * @typedef CustomTags
+ * @type {Object.<TagName, (view_name: ViewName) => boolean}
+ * Tags where you can set in which views the thing is allowed to appear.
+ * Views still need to match the thing for it to appear.
+ * The key is a `TagName`.
+ * The value is a function to check if a tag belongs to a view.
  */
 
 const {
@@ -23,14 +59,6 @@ const {
   CUSTOM_TAGS,
 } = require("./user.js");
 
-/**
- * @typedef CustomViews
- * @type {Object.<string, (tag_names: string[]) => boolean>}
- * Views where you can set what things they will try to show.
- * Matching things can be excluded from a view by using custom tags.
- * The key is a string with the name of the view.
- * The value is a function to check if a thing belongs to the view.
- */
 /** @type {CustomViews} */
 const CORE_CUSTOM_VIEWS = {
   All: (_) => true,
@@ -56,14 +84,6 @@ const CORE_CUSTOM_VIEWS = {
 };
 module.exports.CORE_CUSTOM_VIEWS = CORE_CUSTOM_VIEWS;
 
-/**
- * @typedef CustomTags
- * @type {Object.<string, (view_name: string) => boolean}
- * Tags where you can set in which views the thing is allowed to appear.
- * Views still need to match the thing for it to appear.
- * The key is a string with the tag without a "#".
- * The value is a function to check if a tag belongs to a view.
- */
 /** @type {CustomTags} */
 const CORE_CUSTOM_TAGS = {
   Archive: (view_name) => view_name === "Archive",
@@ -72,8 +92,11 @@ module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
 
 /**
  * Renders a list with all views.
- * @param dv The Dataview plugin's API.
- * @param {string[]} pinned_view_names All the views to be pinned to the top.
+ * @param dv
+ * The Dataview plugin's API.
+ * @param {ViewName[]} pinned_view_names
+ * The names of all the views to be pinned to the top.
+ * Subfolders and a "/" prefix will be ignored.
  */
 function renderViewsList(dv, pinned_view_names) {
   for (const name of pinned_view_names) {
@@ -95,8 +118,11 @@ module.exports.renderViewsList = renderViewsList;
 
 /**
  * Renders a button using the Dataview plugin to create a new thing.
- * @param dv The Dataview plugin's API.
- * @param {string} [button_text="Add Thing"] The text content of the button.
+ * @param dv
+ * The Dataview plugin's API.
+ * @param {string | undefined} button_text
+ * The text content of the button.
+ * `"Add Thing"` is used if not specified.
  */
 function renderAddThingButton(dv, button_text = "Add Thing") {
   /** @type {HTMLButtonElement} */
@@ -116,8 +142,10 @@ module.exports.renderAddThingButton = renderAddThingButton;
 
 /**
  * Renders a Dataview plugin table with all the things for a view.
- * @param dv The Dataview plugin's API.
- * @param {string} [view_name=undefined] The name of the view.
+ * @param dv
+ * The Dataview plugin's API.
+ * @param {ViewName | undefined} view_name
+ * `dv.current().file.name` is used if not specified.
  */
 function renderViewTable(dv, view_name = undefined) {
   if (view_name === undefined) {
@@ -159,10 +187,14 @@ module.exports.renderViewTable = renderViewTable;
 
 /**
  * Renders an icon/image using the Dataview plugin.
- * @param dv The Dataview plugin's API.
- * @param {string} [icon_link=undefined]
- * @param {string} [width="32px"]
- * @param {string} [height="32px"]
+ * @param dv
+ * The Dataview plugin's API.
+ * @param {string | undefined} icon_link
+ * `dv.current().icon` is used if not specified.
+ * @param {string | undefined} width
+ * `"32px"` is used if not specified.
+ * @param {string} height
+ * `"32px"` is used if not specified.
  */
 function renderIcon(
   dv,
@@ -183,9 +215,12 @@ module.exports.renderIcon = renderIcon;
 
 /**
  * Checks if view matches the tags.
- * @param {string} view_name The name of the view to check.
- * @param {string[]} tag_names An array of tag names to check.
- * @returns {boolean} If a view matches the tags.
+ * @param {ViewName} view_name
+ * The name of the view to check.
+ * @param {TagName[]} tag_names
+ * An array of tag names to check.
+ * @returns {boolean}
+ * If a view matches the tags.
  */
 function viewMatchesTags(view_name, tag_names) {
   // When there are no tags, the Dataview plugin's file returns null instead of []
@@ -227,9 +262,13 @@ module.exports.viewMatchesTags = viewMatchesTags;
 
 /**
  * Checks if a regular (not custom) view matches at least one tag.
- * @param {string} view_name The name of the view to check. Its a tag with "/" replaced by " ".
- * @param {string[]} tag_names An array of tag names to check.
- * @returns {boolean} If a view matches at least one tag.
+ * @param {ViewName} view_name
+ * The name of the view to check.
+ * Subfolders and a "/" prefix will be ignored.
+ * @param {TagName[]} tag_names
+ * An array of tag names to check.
+ * @returns {boolean}
+ * If a view matches at least one tag.
  */
 function regularViewMatchesTags(view_name, tag_names) {
   for (const tag_name of tag_names) {
@@ -265,7 +304,11 @@ function regularViewMatchesTags(view_name, tag_names) {
 module.exports.regularViewMatchesTags = regularViewMatchesTags;
 
 /**
- * @returns {{initiated: string[], uninitiated: string[]}} The names of all initiated and uninitiated views.
+ * @returns {{initiated: ViewName[], uninitiated: ViewName[]}}
+ * The names of all initiated and uninitiated views.
+ * An initiated view is a view with an existing file, while an uninitiated
+ *  view is a view which we know can exist (has tags or custom views) but
+ *  their file hasn't been created yet.
  */
 function getAllViews() {
   const initiated_view_names = getInitiatedViewNames().sort();
@@ -302,7 +345,8 @@ function getAllViews() {
 module.exports.getAllViews = getAllViews;
 
 /**
- * @returns {string[]} A list of all regular (not custom) tag names without the "#" prefix.
+ * @returns {TagName[]}
+ * A list of all regular (not custom) `TagName`s.
  */
 function getExistingTagNames() {
   const tag_counts = app.metadataCache.getTags();
@@ -313,7 +357,11 @@ function getExistingTagNames() {
 module.exports.getExistingTagNames = getExistingTagNames;
 
 /**
- * @returns {string[]} A list of the filenames of the views without the ".md" extension.
+ * @returns {ViewName[]}
+ * The names of all initiated views.
+ * An initiated view is a view with an existing file, while an uninitiated
+ *  view is a view which we know can exist (has tags or custom views) but
+ *  their file hasn't been created yet.
  */
 function getInitiatedViewNames() {
   const files = app.vault.getFiles();
