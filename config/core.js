@@ -103,10 +103,11 @@ function renderAddThingButton(dv, button_text = "Add Thing") {
   const button = dv.el("button", button_text);
   button.addEventListener("click", async () => {
     try {
+      await app.vault.createFolder(THINGS_PATH);
+    } catch {}
+    try {
       await app.vault.create(THINGS_PATH + "/Untitled.md", "");
-    } catch {
-      alert("Thing already exists.");
-    }
+    } catch {}
     const new_thing = app.vault.getFileByPath(THINGS_PATH + "/Untitled.md");
     app.workspace.activeLeaf.openFile(new_thing);
   });
