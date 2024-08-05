@@ -100,6 +100,10 @@ module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
  * @param {ViewName[] | undefined} [kwargs.pinned_view_names]
  * The names of all the views to be pinned to the top.
  * `[]` is used if not specified.
+ * @param {boolean} [kwargs.replace_spaces_with_slashes]
+ * If the " " in view names are replaced with "/".
+ * Can be confusing if subfolders are being used.
+ * `true` is used if not specified.
  * @param {string} [kwargs.views_path]
  * The location of the views.
  * `VIEWS_PATH` is used if not specified.
@@ -123,6 +127,7 @@ module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
  */
 function renderViewsList(dv, kwargs) {
   let pinned_view_names = [];
+  let replace_spaces_with_slashes = true;
   let views_path = VIEWS_PATH;
   let merge_views = MERGE_VIEWS_IN_LIST;
   // The following have the defaults set on `getAllViews`
@@ -133,6 +138,9 @@ function renderViewsList(dv, kwargs) {
   if (kwargs !== undefined) {
     if (kwargs.pinned_view_names !== undefined) {
       pinned_view_names = kwargs.pinned_view_names;
+    }
+    if (kwargs.replace_spaces_with_slashes !== undefined) {
+      replace_spaces_with_slashes = kwargs.replace_spaces_with_slashes;
     }
     if (kwargs.views_path !== undefined) {
       views_path = kwargs.views_path;
@@ -155,7 +163,11 @@ function renderViewsList(dv, kwargs) {
   }
   views_path = trimSlashes(views_path);
   for (const name of pinned_view_names) {
-    dv.paragraph(`[[${views_path}/${name} | 🖈 ${name.replace(" ", "/")}]]`);
+    let displayed_name = name;
+    if (replace_spaces_with_slashes) {
+      displayed_name = name.replace(" ", "/");
+    }
+    dv.paragraph(`[[${views_path}/${name} | 🖈 ${displayed_name}]]`);
   }
   let view_names = getAllViews({
     calculate_subfolder_uninitiated,
@@ -172,7 +184,11 @@ function renderViewsList(dv, kwargs) {
     if (pinned_view_names.includes(name)) {
       continue;
     }
-    dv.paragraph(`[[${views_path}/${name} | ${name.replace(" ", "/")}]]`);
+    let displayed_name = name;
+    if (replace_spaces_with_slashes) {
+      displayed_name = name.replace(" ", "/");
+    }
+    dv.paragraph(`[[${views_path}/${name} | ${displayed_name}]]`);
   }
 }
 module.exports.renderViewsList = renderViewsList;
