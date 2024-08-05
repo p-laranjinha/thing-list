@@ -1,5 +1,2 @@
 # So that the current opened tabs, their position, etc. aren't commited.
 /.obsidian/workspace.json
-
-# So that personal changes aren't commited.
-/config/user.js
