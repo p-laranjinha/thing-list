@@ -95,7 +95,7 @@ const REPLACE_VIEW_SPACES_WITH_SLASHES = true;
 /**
  * A list of view names that `renderViewsList` pins to the top.
  */
-const PINNED_VIEW_NAMES = [];
+const PINNED_VIEW_NAMES = [ALL_NAME, UNTAGGED_NAME, OTHERS_NAME];
 /**
  * A prefix `renderViewsList` adds to pinned views.
  */
