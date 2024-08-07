@@ -54,18 +54,33 @@
  */
 
 const {
+  ALL_NAME,
+  UNTAGGED_NAME,
+  OTHERS_NAME,
+  ARCHIVE_NAME,
   VIEWS_PATH,
   THINGS_PATH,
+  ADD_THING_BUTTON_TEXT,
+  NEW_THING_NAME,
+  RENDER_ICON_LINK_PROPERTY,
+  RENDER_ICON_WIDTH,
+  RENDER_ICON_HEIGHT,
   MERGE_VIEWS_IN_LIST,
+  REPLACE_VIEW_SPACES_WITH_SLASHES,
+  PINNED_VIEW_NAMES,
+  PINNED_VIEW_NAME_PREFIX,
+  CALCULATE_SUBFOLDER_UNINITIATED,
+  TABLE_SORT,
+  TABLE_COLUMNS,
   CUSTOM_VIEWS,
   CUSTOM_TAGS,
 } = require("./user.js");
 
 /** @type {CustomViews} */
 const CORE_CUSTOM_VIEWS = {
-  All: (_) => true,
-  Untagged: (tag_names) => tag_names.length === 0,
-  Others: (tag_names) => {
+  [ALL_NAME]: (_) => true,
+  [UNTAGGED_NAME]: (tag_names) => tag_names.length === 0,
+  [OTHERS_NAME]: (tag_names) => {
     const core_custom_view_names = Object.keys(CORE_CUSTOM_VIEWS);
     const user_custom_view_names = Object.keys(CUSTOM_VIEWS);
     for (const view_name of getInitiatedViewNames()) {
@@ -88,7 +103,7 @@ module.exports.CORE_CUSTOM_VIEWS = CORE_CUSTOM_VIEWS;
 
 /** @type {CustomTags} */
 const CORE_CUSTOM_TAGS = {
-  Archive: (view_name) => view_name === "Archive",
+  [ARCHIVE_NAME]: (view_name) => view_name === "Archive",
 };
 module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
 
@@ -103,11 +118,14 @@ module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
  * @param {Object} [kwargs]
  * @param {ViewName[] | undefined} [kwargs.pinned_view_names]
  * The names of all the views to be pinned to the top.
- * `[]` is used if not specified.
+ * `PINNED_VIEW_NAMES` is used if not specified.
+ * @param {string} [kwargs.pinned_prefix]
+ * A prefix to add to all pinned view names.
+ * `PINNED_VIEW_NAME_PREFIX` is used if not specified.
  * @param {boolean} [kwargs.replace_spaces_with_slashes]
  * If the " " in view names are replaced with "/".
  * Can be confusing if subfolders are being used.
- * `true` is used if not specified.
+ * `REPLACE_VIEW_SPACES_WITH_SLASHES` is used if not specified.
  * @param {string} [kwargs.views_path]
  * The location of the views.
  * `VIEWS_PATH` is used if not specified.
@@ -117,11 +135,14 @@ module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
  * @param {boolean} [kwargs.merge_views]
  * If initiated and uninitiated views are rendered mixed or if initiated are
  *  rendered above uninitiated.
+ * An initiated view is a view with an existing file, while an uninitiated
+ *  view is a view which we know can exist (has tags or custom views) but
+ *  their file hasn't been created yet.
  * `MERGE_VIEWS_IN_LIST` is used if not specified.
  * @param {boolean} [kwargs.calculate_subfolder_uninitiated]
  * If uninitiated subfolder views are calculated, instead of just getting the
  *  root uninitiated views at `kwargs.views_path`.
- * `true` is used if unspecified.
+ * `CALCULATE_SUBFOLDER_UNINITIATED` is used if unspecified.
  * @param {CustomViews} [kwargs.custom_views]
  * The user defined custom views.
  * `CUSTOM_VIEWS` is used if not specified.
@@ -130,8 +151,9 @@ module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
  * `CUSTOM_TAGS` is used if not specified.
  */
 function renderViewsList(dv, kwargs) {
-  let pinned_view_names = [];
-  let replace_spaces_with_slashes = true;
+  let pinned_view_names = PINNED_VIEW_NAMES;
+  let pinned_prefix = PINNED_VIEW_NAME_PREFIX;
+  let replace_spaces_with_slashes = REPLACE_VIEW_SPACES_WITH_SLASHES;
   let views_path = VIEWS_PATH;
   let merge_views = MERGE_VIEWS_IN_LIST;
   // The following have the defaults set on `getAllViews`
@@ -142,6 +164,9 @@ function renderViewsList(dv, kwargs) {
   if (kwargs !== undefined) {
     if (kwargs.pinned_view_names !== undefined) {
       pinned_view_names = kwargs.pinned_view_names;
+    }
+    if (kwargs.pinned_prefix !== undefined) {
+      pinned_prefix = kwargs.pinned_prefix;
     }
     if (kwargs.replace_spaces_with_slashes !== undefined) {
       replace_spaces_with_slashes = kwargs.replace_spaces_with_slashes;
@@ -171,7 +196,9 @@ function renderViewsList(dv, kwargs) {
     if (replace_spaces_with_slashes) {
       displayed_name = name.replace(" ", "/");
     }
-    dv.paragraph(`[[${views_path}/${name} | 🖈 ${displayed_name}]]`);
+    dv.paragraph(
+      `[[${views_path}/${name} | ${pinned_prefix}${displayed_name}]]`,
+    );
   }
   let view_names = getAllViews({
     calculate_subfolder_uninitiated,
@@ -204,18 +231,18 @@ module.exports.renderViewsList = renderViewsList;
  * @param {Object} [kwargs]
  * @param {string} [kwargs.button_text]
  * The text content of the button.
- * `"Add Thing"` is used if not specified.
+ * `ADD_THING_BUTTON_TEXT` is used if not specified.
  * @param {string} [kwargs.things_path]
  * The location where the new thing is created.
  * `THINGS_PATH` is used if not specified.
  * @param {string} [kwargs.thing_name]
  * The default file name of the new thing without the ".md" extension.
- * `"Untitled"` is used if not specified.
+ * `NEW_THING_NAME` is used if not specified.
  */
 function renderAddThingButton(dv, kwargs) {
-  let button_text = "Add Thing";
+  let button_text = ADD_THING_BUTTON_TEXT;
   let things_path = THINGS_PATH;
-  let thing_name = "Untitled";
+  let thing_name = NEW_THING_NAME;
   if (kwargs !== undefined) {
     if (kwargs.button_text !== undefined) {
       button_text = kwargs.button_text;
@@ -266,14 +293,13 @@ module.exports.renderAddThingButton = renderAddThingButton;
  * @param {(file)=>any} [kwargs.tableSort]
  * A callback that takes a Dataview plugin's file and returns something sortable
  *  in order to sort the table.
- * `(file) => file.file.name` is used if not specified.
+ * `TABLE_SORT` is used if not specified.
  * @param {{ [column_name: string]: ((file)=>string) | undefined }} [kwargs.table_columns]
  * A dictionary of callbacks where each key is a column name and each callback
  *  takes a Dataview plugin's file and returns what is rendered on the column
  *  for each file.
  * Set a default `column_name` to undefined to remove it.
- * Default `column_name`s are "" for an icon, "Name", "Description", "Tags",
- *  "URL", "Created date", and "Modified date".
+ * Default columns are `TABLE_COLUMNS`.
  * @param {CustomViews} [kwargs.custom_views]
  * The user defined custom views.
  * `CUSTOM_VIEWS` is used if not specified.
@@ -286,25 +312,8 @@ function renderViewTable(dv, kwargs) {
   let view_name = dv
     .current()
     .file.path.slice(trimSlashes(VIEWS_PATH).length + 1, -3);
-  let tableSort = (file) => file.file.name;
-  let table_columns = {
-    "": (file) => `![|16x16](${file.icon})`,
-    Name: (file) => `[[${file.file.path}|${file.name}]]`,
-    Description: (file) => file.description,
-    Tags: (file) => {
-      let tags = "";
-      // When there are no tags, the file returns null instead of []
-      if (file.tags != null) {
-        tags = file.tags.sort().reduce((accumulator, tag) => {
-          return accumulator + " #" + tag;
-        }, "");
-      }
-      return tags;
-    },
-    URL: (file) => file.url,
-    "Created date": (file) => file.ctime,
-    "Modified date": (file) => file.mtime,
-  };
+  let tableSort = TABLE_SORT;
+  let table_columns = TABLE_COLUMNS;
   // The following have the defaults set on `viewMatchesTags`
   let custom_views;
   let custom_tags;
@@ -361,16 +370,16 @@ module.exports.renderViewTable = renderViewTable;
  * The Dataview plugin's API.
  * @param {Object} [kwargs]
  * @param {string} [kwargs.icon_link]
- * `dv.current().icon` is used if not specified.
+ * `dv.current()[RENDER_ICON_LINK_PROPERTY]` is used if not specified.
  * @param {string} [kwargs.width]
- * `"32px"` is used if not specified.
+ * `RENDER_ICON_WIDTH` is used if not specified.
  * @param {string} [kwargs.height]
- * `"32px"` is used if not specified.
+ * `RENDER_ICON_HEIGHT` is used if not specified.
  */
 function renderIcon(dv, kwargs) {
-  let icon_link = dv.current().icon;
-  let width = "32px";
-  let height = "32px";
+  let icon_link = dv.current()[RENDER_ICON_LINK_PROPERTY];
+  let width = RENDER_ICON_WIDTH;
+  let height = RENDER_ICON_HEIGHT;
   if (kwargs !== undefined) {
     if (kwargs.icon_link !== undefined) {
       icon_link = kwargs.icon_link;
@@ -528,7 +537,7 @@ module.exports.regularViewMatchesTags = regularViewMatchesTags;
  * @param {boolean} [kwargs.calculate_subfolder_uninitiated]
  * If uninitiated subfolder views are calculated, instead of just getting the
  *  root uninitiated views at `kwargs.views_path`.
- * `true` is used if unspecified.
+ * `CALCULATE_SUBFOLDER_UNINITIATED` is used if unspecified.
  * @param {string} [kwargs.views_path]
  * The location of the views.
  * `VIEWS_PATH` is used if unspecified.
@@ -544,7 +553,7 @@ module.exports.regularViewMatchesTags = regularViewMatchesTags;
  * @returns {{initiated: ViewName[], uninitiated: ViewName[]}}
  */
 function getAllViews(kwargs) {
-  let calculate_subfolder_uninitiated = true;
+  let calculate_subfolder_uninitiated = CALCULATE_SUBFOLDER_UNINITIATED;
   let views_path = VIEWS_PATH;
   let things_path = THINGS_PATH;
   let custom_views = CUSTOM_VIEWS;
