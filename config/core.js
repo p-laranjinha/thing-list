@@ -92,6 +92,10 @@ const CORE_CUSTOM_TAGS = {
 };
 module.exports.CORE_CUSTOM_TAGS = CORE_CUSTOM_TAGS;
 
+// =========================== //
+// Functions used in `Home.md` //
+// =========================== //
+
 /**
  * Renders a list with all views.
  * @param dv
@@ -245,6 +249,10 @@ function renderAddThingButton(dv, kwargs) {
 }
 module.exports.renderAddThingButton = renderAddThingButton;
 
+// =========================== //
+// Functions used in `view.md` //
+// =========================== //
+
 /**
  * Renders a Dataview plugin table with all the things for a view.
  * @param dv
@@ -343,6 +351,10 @@ function renderViewTable(dv, kwargs) {
 }
 module.exports.renderViewTable = renderViewTable;
 
+// ============================ //
+// Functions used in `thing.md` //
+// ============================ //
+
 /**
  * Renders an icon/image using the Dataview plugin.
  * @param dv
@@ -377,6 +389,10 @@ function renderIcon(dv, kwargs) {
   }
 }
 module.exports.renderIcon = renderIcon;
+
+// ================================================= //
+// Utility functions not called in any markdown file //
+// ================================================= //
 
 /**
  * Checks if view matches the tags.
