@@ -4,7 +4,7 @@
 > This vault appears to be working but still requires quite a bit of testing.
 
 An [Obsidian](https://obsidian.md) vault with the purpose of saving any random
-thing one feels like should be saved just in case its needed later.
+thing one feels like should be saved just in case it's needed later.
 
 This vault works out-of-the-box after downloading and opening with Obsidian.
 After opening Obsidian, you can open [Home.md](Home.md) and from there add
