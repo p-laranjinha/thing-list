@@ -21,7 +21,7 @@ interesting paragraph.
 
 By default every thing has 5 properties at the top:
 
-- **name**: Can ususally be the same as the name of the file, but can differ if you
+- **name**: Can usually be the same as the name of the file, but can differ if you
 want characters not allowed in file names or if you want the file names to be
 smaller.
 
@@ -179,13 +179,13 @@ Obsidian to be launched on system startup and run in the background.
 #### Adding
 
 There are many extensions for both Chrome and Firefox that add notes to a
-vault. Many of these extensions also require an aditional plugin or to keep
+vault. Many of these extensions also require an additional plugin or to keep
 Obsidian open in the background.
 
 The one I recommend is
 [Obsidian Clipper](https://github.com/jplattel/obsidian-clipper), available
 for both Chrome and Firefox. It allows you to customize the content of the
-note, doesn't require any aditional plugin, but it does open Obsidian if it was
+note, doesn't require any additional plugin, but it does open Obsidian if it was
 closed. There are also many reviews and GitHub issues complaining that it isn't
 working for them, but I'm having no problems, so good luck with that.
 
