@@ -1,6 +1,8 @@
 {
   "livePreview": false,
-  "vimMode": false,
   "readableLineLength": false,
-  "showUnsupportedFiles": true
+  "showUnsupportedFiles": true,
+  "defaultViewMode": "preview",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "Things"
 }

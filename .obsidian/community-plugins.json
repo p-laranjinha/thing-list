@@ -2,5 +2,8 @@
   "dataview",
   "templater-obsidian",
   "modules",
-  "OA-file-hider"
+  "OA-file-hider",
+  "new-tab-default-page",
+  "obsidian-view-mode-by-frontmatter",
+  "obsidian-sortable"
 ]
