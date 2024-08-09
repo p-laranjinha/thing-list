@@ -153,15 +153,28 @@ const TABLE_COLUMNS = {
 // Create custom Views and Tags //
 // ============================ //
 
-const { regularViewMatchesTags } = require("./core.js");
+/**
+ * Even though the Module plugin supports circular dependencies, it doesn't
+ *  seem to work by using `require` at the top level and using the imported
+ *  values inside the functions of `CUSTOM_VIEWS` and `CUSTOM_TAGS`.
+ * Use this, or just a regular `require` inside each `CUSTOM_VIEWS` and
+ *  `CUSTOM_TAGS` function.
+ */
+function requireCore() {
+  return require("config/core.js");
+}
 /** @import { CustomTags, CustomViews } from "./core.js"; */
 
 /**
+ * Read the `requireCore` description above to know how to use functions from
+ *  `core.js` in these functions.
  * Read the `CustomViews` description at the top of `core.js` for more info.
  * @type {CustomViews}
  */
 const CUSTOM_VIEWS = {};
 /**
+ * Read the `requireCore` description above to know how to use functions from
+ *  `core.js` in these functions.
  * Read the `CustomTags` description at the top of `core.js` for more info.
  * @type {CustomTags}
  */
