@@ -157,10 +157,7 @@ non-Markdown text file is opened, allowing you to edit
 ### Searching and adding things from a browser
 
 If you want to use this vault as a replacement to bookmarks, or not but still
-want to search and add to it from outside Obsidian, there are some solutions. 
-
-But the solutions I found don't work on mobile, so it may not fit your use case.
-Maybe you can create a bookmark at the same time you create a thing?
+want to search and add to it from outside Obsidian, there are some solutions.
 
 #### Searching
 
