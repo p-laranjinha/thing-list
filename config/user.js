@@ -145,8 +145,8 @@ const TABLE_COLUMNS = {
     return tags;
   },
   URL: (file) => file.url,
-  "Created date": (file) => file.ctime,
-  "Modified date": (file) => file.mtime,
+  "Created date": (file) => file.file.ctime,
+  "Modified date": (file) => file.file.mtime,
 };
 
 // ============================ //
