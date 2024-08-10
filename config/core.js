@@ -90,7 +90,8 @@ const CORE_CUSTOM_VIEWS = {
       }
       // If a regular or custom view matches, it doesn't show on the "Others" view
       if (
-        user_custom_view_names.includes(view_name) ||
+        (user_custom_view_names.includes(view_name) &&
+          CUSTOM_VIEWS[view_name](tag_names)) ||
         regularViewMatchesTags(view_name, tag_names)
       ) {
         return false;
