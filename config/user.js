@@ -123,7 +123,7 @@ const CALCULATE_SUBFOLDER_UNINITIATED = true;
  *  in order to sort the thing tables rendered by `renderViewTable`.
  * @type {(file)=>any}
  */
-const TABLE_SORT = (file) => file.file.name;
+const TABLE_SORT = (file) => file.name;
 /**
  * A dictionary of callbacks where each key is a column name and each callback
  *  takes a Dataview plugin's file and returns what is rendered on the column
