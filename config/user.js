@@ -71,37 +71,37 @@ const PINNED_VIEW_NAME_PREFIX = "🖈 ";
 // ----------
 
 /**
- * The label used for the sorting dropdown rendered by `renderViewTable`.
+ * The label used for the sorting dropdown rendered by `renderThingsTable`.
  */
 const SORTING_LABEL_TEXT = "Sort:";
 /**
- * The label used for the input rendered by `renderViewTable` that changes how
+ * The label used for the input rendered by `renderThingsTable` that changes how
  *  many things are shown each page.
  */
 const THINGS_PER_PAGE_LABEL_TEXT = "Things per page:";
 /**
- * The label used for the inputs rendered by `renderViewTable` that change what
+ * The label used for the inputs rendered by `renderThingsTable` that change what
  *  page is currently being shown.
  */
 const PAGE_SELECTION_LABEL_TEXT = "Page:";
 /**
- * The text for the button rendered by `renderViewTable` that changes the page
+ * The text for the button rendered by `renderThingsTable` that changes the page
  *  being shown to the previous one.
  */
 const PREVIOUS_PAGE_BUTTON_TEXT = "Previous";
 /**
- * The text for the button rendered by `renderViewTable` that changes the page
+ * The text for the button rendered by `renderThingsTable` that changes the page
  *  being shown to the next one.
  */
 const NEXT_PAGE_BUTTON_TEXT = "Next";
 /**
  * The suffix added to every option of the sorting dropdown rendered by
- *  `renderViewTable` that keeps the sorting order.
+ *  `renderThingsTable` that keeps the sorting order.
  */
 const ASCENDING_SUFFIX = ", ascending";
 /**
  * The suffix added to every option of the sorting dropdown rendered by
- *  `renderViewTable` that reverses the sorting order.
+ *  `renderThingsTable` that reverses the sorting order.
  */
 const DESCENDING_SUFFIX = ", descending";
 
@@ -158,14 +158,14 @@ const CALCULATE_SUBFOLDER_UNINITIATED = true;
 
 /**
  * How many things are shown each page in the table rendered by
- *  `renderViewTable`.
+ *  `renderThingsTable`.
  */
 const THINGS_PER_PAGE = 20;
 
 /**
  * A dictionary of callbacks where each key is a name and each value is a
  *  callback that takes a Dataview plugin's file and returns something sortable
- *  in order to sort the thing tables rendered by `renderViewTable`.
+ *  in order to sort the thing tables rendered by `renderThingsTable`.
  * The first entry in this dictionary is the default sort.
  * Table columns are included in this dictionary but can be overwritten by
  *  using the same key, and deleted if the value is undefined.
@@ -178,7 +178,7 @@ const TABLE_SORTS = {
 /**
  * A dictionary of callbacks where each key is a column name and each callback
  *  takes a Dataview plugin's file and returns what is rendered on the column
- *  of thing tables rendered by `renderViewTable`.
+ *  of thing tables rendered by `renderThingsTable`.
  * @type {{ [column_name: string]: (file)=>string }}
  */
 const TABLE_COLUMNS = {

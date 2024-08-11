@@ -348,7 +348,7 @@ module.exports.renderAddThingButton = renderAddThingButton;
  * The user defined custom tags.
  * `CUSTOM_TAGS` is used if not specified.
  */
-async function renderViewTable(dv, kwargs) {
+async function renderThingsTable(dv, kwargs) {
   let things_path =
     THINGS_PATH +
     dv.current().file.folder.slice(trimSlashes(VIEWS_PATH).length);
@@ -629,7 +629,7 @@ async function renderViewTable(dv, kwargs) {
     renderTable();
   });
 }
-module.exports.renderViewTable = renderViewTable;
+module.exports.renderThingsTable = renderThingsTable;
 
 // ============================ //
 // Functions used in `thing.md` //

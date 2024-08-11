@@ -1,4 +1,4 @@
 ```dataviewjs
-const { renderViewTable } = self.require("[[core.js]]");
-renderViewTable(dv);
+const { renderThingsTable } = self.require("[[core.js]]");
+renderThingsTable(dv);
 ```
