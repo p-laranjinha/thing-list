@@ -3,6 +3,6 @@
   "readableLineLength": false,
   "showUnsupportedFiles": true,
   "defaultViewMode": "preview",
-  "newFileLocation": "folder",
+  "newFileLocation": "root",
   "newFileFolderPath": "Things"
 }

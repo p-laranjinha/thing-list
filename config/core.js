@@ -298,12 +298,15 @@ module.exports.renderAddThingButton = renderAddThingButton;
  * @param dv
  * The Dataview plugin's API.
  * @param {Object} kwargs
+ * @param {string} [kwargs.views_path]
+ * The location of the views.
+ * `VIEWS_PATH` is used if not specified.
  * @param {string} [kwargs.things_path]
  * The location of the things.
- * `THINGS_PATH + dv.current().file.folder.slice(trimSlashes(VIEWS_PATH).length)`
+ * `trimSlashes(THINGS_PATH) + dv.current().file.folder.slice(kwargs.views_path.length)`
  *  is used if not specified.
  * @param {ViewName | undefined} [kwargs.view_name]
- * `dv.current().file.path.slice(VIEWS_PATH.length + 1, -3)` is used if not specified.
+ * `dv.current().file.path.slice(kwargs.views_path.length + 1, -3)` is used if not specified.
  * @param {number} [kwargs.things_per_page]
  * How many things are shown each page.
  * `THINGS_PER_PAGE` is used if not specified.
@@ -349,12 +352,16 @@ module.exports.renderAddThingButton = renderAddThingButton;
  * `CUSTOM_TAGS` is used if not specified.
  */
 async function renderThingsTable(dv, kwargs) {
+  let views_path = trimSlashes(VIEWS_PATH);
+  // `views_path` needs to be overwritten before the others because other
+  //  arguments depend on it
+  if (kwargs !== undefined && kwargs.views_path !== undefined) {
+    views_path = kwargs.views_path;
+  }
   let things_path =
-    THINGS_PATH +
-    dv.current().file.folder.slice(trimSlashes(VIEWS_PATH).length);
-  let view_name = dv
-    .current()
-    .file.path.slice(trimSlashes(VIEWS_PATH).length + 1, -3);
+    trimSlashes(THINGS_PATH) +
+    dv.current().file.folder.slice(views_path.length);
+  let view_name = dv.current().file.path.slice(views_path + 1, -3);
   let things_per_page = THINGS_PER_PAGE;
   let sorting_label_text = SORTING_LABEL_TEXT;
   let things_per_page_label_text = THINGS_PER_PAGE_LABEL_TEXT;
