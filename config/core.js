@@ -491,7 +491,10 @@ async function renderViewTable(dv, kwargs) {
   page_selection_container.style.alignItems = "center";
   container.append(page_selection_container);
 
-  let page_count = Math.ceil(all_things.length / things_per_page_input.value);
+  let page_count = Math.max(
+    1,
+    Math.ceil(all_things.length / things_per_page_input.value),
+  );
 
   const page_selection_label = document.createElement("label");
   page_selection_label.innerText = page_selection_label_text;
@@ -522,6 +525,9 @@ async function renderViewTable(dv, kwargs) {
 
   const next_page_button = document.createElement("button");
   next_page_button.innerText = next_page_button_text;
+  if (page_count <= 1) {
+    next_page_button.disabled = true;
+  }
   page_selection_container.append(next_page_button);
 
   // Function to render table
@@ -574,6 +580,12 @@ async function renderViewTable(dv, kwargs) {
   page_selection_input.addEventListener("change", renderTable);
   sorting_select.addEventListener("change", () => {
     page_selection_input.value = 1;
+    previous_page_button.disabled = true;
+    if (page_count <= 1) {
+      next_page_button.disabled = true;
+    } else {
+      next_page_button.disabled = false;
+    }
     renderTable();
   });
   previous_page_button.addEventListener("click", () => {
@@ -599,7 +611,10 @@ async function renderViewTable(dv, kwargs) {
     renderTable();
   });
   things_per_page_input.addEventListener("change", () => {
-    page_count = Math.ceil(all_things.length / things_per_page_input.value);
+    page_count = Math.max(
+      1,
+      Math.ceil(all_things.length / things_per_page_input.value),
+    );
     page_selection_input.max = page_count;
     if (page_selection_input.value >= page_count) {
       page_selection_input.value = page_count;
