@@ -203,7 +203,7 @@ function renderViewsList(dv, kwargs) {
   for (const name of pinned_view_names) {
     let displayed_name = name;
     if (replace_spaces_with_slashes) {
-      displayed_name = name.replace(" ", "/");
+      displayed_name = name.replaceAll(" ", "/");
     }
     dv.paragraph(
       `[[${views_path}/${name} | ${pinned_prefix}${displayed_name}]]`,
@@ -226,7 +226,7 @@ function renderViewsList(dv, kwargs) {
     }
     let displayed_name = name;
     if (replace_spaces_with_slashes) {
-      displayed_name = name.replace(" ", "/");
+      displayed_name = name.replaceAll(" ", "/");
     }
     dv.paragraph(`[[${views_path}/${name} | ${displayed_name}]]`);
   }
@@ -300,7 +300,8 @@ module.exports.renderAddThingButton = renderAddThingButton;
  * @param {Object} kwargs
  * @param {string} [kwargs.things_path]
  * The location of the things.
- * `THINGS_PATH` is used if not specified.
+ * `THINGS_PATH + dv.current().file.folder.slice(trimSlashes(VIEWS_PATH).length)`
+ *  is used if not specified.
  * @param {ViewName | undefined} [kwargs.view_name]
  * `dv.current().file.path.slice(VIEWS_PATH.length + 1, -3)` is used if not specified.
  * @param {number} [kwargs.things_per_page]
@@ -348,7 +349,9 @@ module.exports.renderAddThingButton = renderAddThingButton;
  * `CUSTOM_TAGS` is used if not specified.
  */
 async function renderViewTable(dv, kwargs) {
-  let things_path = THINGS_PATH;
+  let things_path =
+    THINGS_PATH +
+    dv.current().file.folder.slice(trimSlashes(VIEWS_PATH).length);
   let view_name = dv
     .current()
     .file.path.slice(trimSlashes(VIEWS_PATH).length + 1, -3);
@@ -856,7 +859,7 @@ function getAllViews(kwargs) {
     const files = app.vault.getFiles();
     let thing_subfolder_files = files.filter((file) =>
       // Searching for a "/" so that the path has to have a subfolder
-      file.parent.path.startsWith(views_path + "/"),
+      file.parent.path.startsWith(things_path + "/"),
     );
     const things_path_length = things_path.length + 1;
     let existing_subfolder_tag_names = new Set();
