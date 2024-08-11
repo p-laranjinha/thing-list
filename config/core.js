@@ -62,15 +62,23 @@ const {
   THINGS_PATH,
   ADD_THING_BUTTON_TEXT,
   NEW_THING_NAME,
+  PINNED_VIEW_NAME_PREFIX,
+  THINGS_PER_PAGE,
+  SORTING_LABEL_TEXT,
+  THINGS_PER_PAGE_LABEL_TEXT,
+  PAGE_SELECTION_LABEL_TEXT,
+  PREVIOUS_PAGE_BUTTON_TEXT,
+  NEXT_PAGE_BUTTON_TEXT,
+  ASCENDING_SUFFIX,
+  DESCENDING_SUFFIX,
   RENDER_ICON_LINK_PROPERTY,
   RENDER_ICON_WIDTH,
   RENDER_ICON_HEIGHT,
   MERGE_VIEWS_IN_LIST,
   REPLACE_VIEW_SPACES_WITH_SLASHES,
   PINNED_VIEW_NAMES,
-  PINNED_VIEW_NAME_PREFIX,
   CALCULATE_SUBFOLDER_UNINITIATED,
-  TABLE_SORT,
+  TABLE_SORTS,
   TABLE_COLUMNS,
   CUSTOM_VIEWS,
   CUSTOM_TAGS,
@@ -283,6 +291,10 @@ module.exports.renderAddThingButton = renderAddThingButton;
 
 /**
  * Renders a Dataview plugin table with all the things for a view.
+ * This table includes a sorting dropdown selector and pagination.
+ * This function is `async` because some workarounds are required to replace the
+ *  table when sorting or the page changes. If `await` is not used, any further
+ *  elements created using Dataview may be deleted when the table is replaced.
  * @param dv
  * The Dataview plugin's API.
  * @param {Object} kwargs
@@ -291,15 +303,42 @@ module.exports.renderAddThingButton = renderAddThingButton;
  * `THINGS_PATH` is used if not specified.
  * @param {ViewName | undefined} [kwargs.view_name]
  * `dv.current().file.path.slice(VIEWS_PATH.length + 1, -3)` is used if not specified.
- * @param {(file)=>any} [kwargs.tableSort]
- * A callback that takes a Dataview plugin's file and returns something sortable
+ * @param {number} [kwargs.things_per_page]
+ * How many things are shown each page.
+ * `THINGS_PER_PAGE` is used if not specified.
+ * @param {string} [kwargs.sorting_label_text]
+ * The label used for the sorting dropdown.
+ * `SORTING_LABEL_TEXT` is used if not specified.
+ * @param {string} [kwargs.things_per_page_label_text]
+ * The label used for the input that changes how many things are shown each page.
+ * `THINGS_PER_PAGE_LABEL_TEXT` is used if not specified.
+ * @param {string} [kwargs.page_selection_label_text]
+ * The label used for the inputs that change what page is currently being shown.
+ * `PAGE_SELECTION_LABEL_TEXT` is used if not specified.
+ * @param {string} [kwargs.previous_page_button_text]
+ * The text for the button that changes the page being shown to the previous one.
+ * `PREVIOUS_PAGE_BUTTON_TEXT` is used if not specified.
+ * @param {string} [kwargs.next_page_button_text]
+ * The text for the button that changes the page being shown to the next one.
+ * `NEXT_PAGE_BUTTON_TEXT` is used if not specified.
+ * @param {string} [kwargs.ascending_suffix]
+ * The suffix added to every option of the sorting dropdown that keeps the sorting order.
+ * `ASCENDING_SUFFIX` is used if not specified.
+ * @param {string} [kwargs.descending_suffix]
+ * The suffix added to every option of the sorting dropdown that reverses the sorting order.
+ * `DESCENDING_SUFFIX` is used if not specified.
+ * @param {{ [sort_name: string]: ((file)=>any) | undefined }} [kwargs.table_sorts]
+ * A dictionary of callbacks where each key is a name and each value is a
+ *  callback that takes a Dataview plugin's file and returns something sortable
  *  in order to sort the table.
- * `TABLE_SORT` is used if not specified.
+ * The first entry in this dictionary is the default sort.
+ * `kwargs.table_columns` are included in this dictionary but can be
+ *  overwritten by using the same key, and deleted if the value is undefined.
+ * Default sorts are `TABLE_SORTS`.
  * @param {{ [column_name: string]: ((file)=>string) | undefined }} [kwargs.table_columns]
  * A dictionary of callbacks where each key is a column name and each callback
  *  takes a Dataview plugin's file and returns what is rendered on the column
  *  for each file.
- * Set a default `column_name` to undefined to remove it.
  * Default columns are `TABLE_COLUMNS`.
  * @param {CustomViews} [kwargs.custom_views]
  * The user defined custom views.
@@ -308,16 +347,27 @@ module.exports.renderAddThingButton = renderAddThingButton;
  * The user defined custom tags.
  * `CUSTOM_TAGS` is used if not specified.
  */
-function renderViewTable(dv, kwargs) {
+async function renderViewTable(dv, kwargs) {
   let things_path = THINGS_PATH;
   let view_name = dv
     .current()
     .file.path.slice(trimSlashes(VIEWS_PATH).length + 1, -3);
-  let tableSort = TABLE_SORT;
-  let table_columns = TABLE_COLUMNS;
+  let things_per_page = THINGS_PER_PAGE;
+  let sorting_label_text = SORTING_LABEL_TEXT;
+  let things_per_page_label_text = THINGS_PER_PAGE_LABEL_TEXT;
+  let page_selection_label_text = PAGE_SELECTION_LABEL_TEXT;
+  let previous_page_button_text = PREVIOUS_PAGE_BUTTON_TEXT;
+  let next_page_button_text = NEXT_PAGE_BUTTON_TEXT;
+  let ascending_suffix = ASCENDING_SUFFIX;
+  let descending_suffix = DESCENDING_SUFFIX;
+  // Clone object with functions
+  let table_sorts = Object.assign({}, TABLE_SORTS);
+  // Clone object with functions
+  let table_columns = Object.assign({}, TABLE_COLUMNS);
   // The following have the defaults set on `viewMatchesTags`
   let custom_views;
   let custom_tags;
+
   if (kwargs !== undefined) {
     if (kwargs.things_path !== undefined) {
       things_path = kwargs.things_path;
@@ -325,13 +375,35 @@ function renderViewTable(dv, kwargs) {
     if (kwargs.view_name !== undefined) {
       view_name = trimSlashes(kwargs.view_name);
     }
-    if (kwargs.tableSort !== undefined) {
-      tableSort = kwargs.tableSort;
+    if (kwargs.things_per_page !== undefined) {
+      things_per_page = kwargs.things_per_page;
+    }
+    if (kwargs.sorting_label_text !== undefined) {
+      sorting_label_text = kwargs.sorting_label_text;
+    }
+    if (kwargs.things_per_page_label_text !== undefined) {
+      things_per_page_label_text = kwargs.things_per_page_label_text;
+    }
+    if (kwargs.page_selection_label_text !== undefined) {
+      page_selection_label_text = kwargs.page_selection_label_text;
+    }
+    if (kwargs.previous_page_button_text !== undefined) {
+      previous_page_button_text = kwargs.previous_page_button_text;
+    }
+    if (kwargs.next_page_button_text !== undefined) {
+      next_page_button_text = kwargs.next_page_button_text;
+    }
+    if (kwargs.ascending_suffix !== undefined) {
+      ascending_suffix = kwargs.ascending_suffix;
+    }
+    if (kwargs.descending_suffix !== undefined) {
+      descending_suffix = kwargs.descending_suffix;
+    }
+    if (kwargs.table_sorts !== undefined) {
+      table_sorts = kwargs.table_sorts;
     }
     if (kwargs.table_columns !== undefined) {
-      for (const column_name of kwargs.table_columns) {
-        table_columns[column_name] = kwargs.table_columns[column_name];
-      }
+      table_columns = kwargs.table_columns;
     }
     if (kwargs.custom_views !== undefined) {
       custom_views = kwargs.custom_views;
@@ -340,24 +412,204 @@ function renderViewTable(dv, kwargs) {
       custom_tags = kwargs.custom_tags;
     }
   }
-  // Remove undefined table columns
-  const table_column_names = Object.keys(table_columns).filter(
-    (column_name) => table_columns[column_name],
+
+  const table_column_names = Object.keys(table_columns);
+
+  // Add non-overwritten table columns to sorts
+  let table_sort_names = Object.keys(table_sorts);
+  for (const column_name of table_column_names) {
+    if (!table_sort_names.includes(column_name)) {
+      table_sorts[column_name] = table_columns[column_name];
+    }
+  }
+  // Remove undefined table sorts
+  table_sort_names = Object.keys(table_sorts).filter(
+    (sort_name) => table_sorts[sort_name] !== undefined,
   );
-  dv.table(
-    table_column_names,
-    dv
-      .pages(`"${things_path}"`)
-      .where((file) =>
-        viewMatchesTags(view_name, file.tags, { custom_views, custom_tags }),
-      )
-      .sort(tableSort)
-      .map((file) => {
+
+  let all_things = dv
+    .pages(`"${things_path}"`)
+    .where((file) =>
+      viewMatchesTags(view_name, file.tags, { custom_views, custom_tags }),
+    );
+
+  const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.gap = "16px";
+  container.style.alignItems = "center";
+  container.style.flexWrap = "wrap";
+  container.style.minHeight = "40px";
+  dv.container.append(container);
+
+  // Sorting elements
+
+  const sorting_container = document.createElement("div");
+  sorting_container.style.display = "flex";
+  sorting_container.style.gap = "4px";
+  sorting_container.style.alignItems = "center";
+  container.append(sorting_container);
+
+  const sorting_label = document.createElement("label");
+  sorting_label.innerText = sorting_label_text;
+  sorting_container.append(sorting_label);
+
+  const sorting_select = document.createElement("select");
+  sorting_select.classList.add("dropdown");
+  sorting_container.append(sorting_select);
+  for (const sort_name of table_sort_names) {
+    for (const order_suffix of [ascending_suffix, descending_suffix]) {
+      const sorting_option = document.createElement("option");
+      sorting_option.value = sort_name + order_suffix;
+      sorting_option.innerText = sort_name + order_suffix;
+      sorting_select.append(sorting_option);
+    }
+  }
+
+  // Things per page elements
+
+  const things_per_page_container = document.createElement("div");
+  things_per_page_container.style.display = "flex";
+  things_per_page_container.style.gap = "4px";
+  things_per_page_container.style.alignItems = "center";
+  container.append(things_per_page_container);
+
+  const things_per_page_label = document.createElement("label");
+  things_per_page_label.innerText = things_per_page_label_text;
+  things_per_page_container.append(things_per_page_label);
+
+  const things_per_page_input = document.createElement("input");
+  things_per_page_input.type = "number";
+  things_per_page_input.min = 1;
+  things_per_page_input.value = things_per_page;
+  things_per_page_container.append(things_per_page_input);
+
+  // Page selection elements
+
+  const page_selection_container = document.createElement("div");
+  page_selection_container.style.display = "flex";
+  page_selection_container.style.gap = "4px";
+  page_selection_container.style.alignItems = "center";
+  container.append(page_selection_container);
+
+  let page_count = Math.ceil(all_things.length / things_per_page_input.value);
+
+  const page_selection_label = document.createElement("label");
+  page_selection_label.innerText = page_selection_label_text;
+  page_selection_container.append(page_selection_label);
+
+  const previous_page_button = document.createElement("button");
+  previous_page_button.innerText = previous_page_button_text;
+  previous_page_button.disabled = true;
+  page_selection_container.append(previous_page_button);
+
+  const page_selection_input_container = document.createElement("div");
+  page_selection_input_container.style.position = "relative";
+  page_selection_container.append(page_selection_input_container);
+  const page_selection_input = document.createElement("input");
+  page_selection_input.type = "number";
+  page_selection_input.min = 1;
+  page_selection_input.max = page_count;
+  page_selection_input.value = 1;
+  page_selection_input_container.append(page_selection_input);
+  const page_selection_input_suffix = document.createElement("span");
+  page_selection_input_suffix.innerText = "/" + page_count;
+  page_selection_input_suffix.style.fontSize = "var(--font-ui-small)";
+  page_selection_input_suffix.style.position = "absolute";
+  page_selection_input_suffix.style.right = "var(--size-4-2)";
+  page_selection_input_suffix.style.height = "var(--input-height)";
+  page_selection_input_suffix.style.lineHeight = "var(--input-height)";
+  page_selection_input_container.append(page_selection_input_suffix);
+
+  const next_page_button = document.createElement("button");
+  next_page_button.innerText = next_page_button_text;
+  page_selection_container.append(next_page_button);
+
+  // Function to render table
+
+  const table_container = document.createElement("div");
+  table_container.style.overflowX = "auto";
+  dv.container.append(table_container);
+  async function renderTable() {
+    // Remove old table and any other elements in `table_container`.
+    table_container.replaceChildren();
+    const is_descending = sorting_select.value.endsWith(descending_suffix);
+    if (is_descending) {
+      all_things = all_things.sort(
+        table_sorts[
+          sorting_select.value.slice(0, -1 * descending_suffix.length)
+        ],
+        "desc",
+      );
+    } else {
+      all_things = all_things.sort(
+        table_sorts[
+          sorting_select.value.slice(0, -1 * ascending_suffix.length)
+        ],
+      );
+    }
+    const start_index =
+      things_per_page_input.value * (page_selection_input.value - 1);
+    const end_index = things_per_page_input.value * page_selection_input.value;
+    const things = all_things.slice(start_index, end_index);
+
+    // Change `dv.container` so we know where the table is at and can remove it.
+    // If `await` was not used, elements from outside this function may be
+    //  added to `table_container` and removed.
+    const real_dv_container = dv.container;
+    dv.container = table_container;
+    await dv.table(
+      table_column_names,
+      things.map((file) => {
         return table_column_names.map((column_name) =>
           table_columns[column_name](file),
         );
       }),
-  );
+    );
+    dv.container = real_dv_container;
+  }
+  await renderTable();
+
+  // Event listeners for the inputs
+
+  page_selection_input.addEventListener("change", renderTable);
+  sorting_select.addEventListener("change", () => {
+    page_selection_input.value = 1;
+    renderTable();
+  });
+  previous_page_button.addEventListener("click", () => {
+    page_selection_input.value =
+      Number.parseInt(page_selection_input.value) - 1;
+    if (page_selection_input.value <= 1) {
+      previous_page_button.disabled = true;
+    } else {
+      previous_page_button.disabled = false;
+    }
+    next_page_button.disabled = false;
+    renderTable();
+  });
+  next_page_button.addEventListener("click", () => {
+    page_selection_input.value =
+      Number.parseInt(page_selection_input.value) + 1;
+    if (page_selection_input.value >= page_count) {
+      next_page_button.disabled = true;
+    } else {
+      next_page_button.disabled = false;
+    }
+    previous_page_button.disabled = false;
+    renderTable();
+  });
+  things_per_page_input.addEventListener("change", () => {
+    page_count = Math.ceil(all_things.length / things_per_page_input.value);
+    page_selection_input.max = page_count;
+    if (page_selection_input.value >= page_count) {
+      page_selection_input.value = page_count;
+      next_page_button.disabled = true;
+    } else {
+      next_page_button.disabled = false;
+    }
+    page_selection_input_suffix.innerText = "/" + page_count;
+    renderTable();
+  });
 }
 module.exports.renderViewTable = renderViewTable;
 

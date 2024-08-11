@@ -54,14 +54,56 @@ const THINGS_PATH = "Things";
 // ----------
 
 /**
- * The text of the button rendered by `renderThingButton`.
+ * The text of the button rendered by `renderAddThingButton`.
  */
 const ADD_THING_BUTTON_TEXT = "Add Thing";
 /**
  * The name of the thing generated when the button rendered by
- *  `renderThingButton` is pressed.
+ *  `renderAddThingButton` is pressed.
  */
 const NEW_THING_NAME = "Untitled";
+
+/**
+ * A prefix `renderViewsList` adds to pinned views.
+ */
+const PINNED_VIEW_NAME_PREFIX = "🖈 ";
+
+// ----------
+
+/**
+ * The label used for the sorting dropdown rendered by `renderViewTable`.
+ */
+const SORTING_LABEL_TEXT = "Sort:";
+/**
+ * The label used for the input rendered by `renderViewTable` that changes how
+ *  many things are shown each page.
+ */
+const THINGS_PER_PAGE_LABEL_TEXT = "Things per page:";
+/**
+ * The label used for the inputs rendered by `renderViewTable` that change what
+ *  page is currently being shown.
+ */
+const PAGE_SELECTION_LABEL_TEXT = "Page:";
+/**
+ * The text for the button rendered by `renderViewTable` that changes the page
+ *  being shown to the previous one.
+ */
+const PREVIOUS_PAGE_BUTTON_TEXT = "Previous";
+/**
+ * The text for the button rendered by `renderViewTable` that changes the page
+ *  being shown to the next one.
+ */
+const NEXT_PAGE_BUTTON_TEXT = "Next";
+/**
+ * The suffix added to every option of the sorting dropdown rendered by
+ *  `renderViewTable` that keeps the sorting order.
+ */
+const ASCENDING_SUFFIX = ", ascending";
+/**
+ * The suffix added to every option of the sorting dropdown rendered by
+ *  `renderViewTable` that reverses the sorting order.
+ */
+const DESCENDING_SUFFIX = ", descending";
 
 // ----------
 
@@ -100,10 +142,6 @@ const REPLACE_VIEW_SPACES_WITH_SLASHES = true;
  * A list of view names that `renderViewsList` pins to the top.
  */
 const PINNED_VIEW_NAMES = [ALL_NAME, UNTAGGED_NAME, OTHERS_NAME];
-/**
- * A prefix `renderViewsList` adds to pinned views.
- */
-const PINNED_VIEW_NAME_PREFIX = "🖈 ";
 
 // ----------
 
@@ -119,16 +157,29 @@ const CALCULATE_SUBFOLDER_UNINITIATED = true;
 // ----------
 
 /**
- * A callback that takes a Dataview plugin's file and returns something sortable
- *  in order to sort the thing tables rendered by `renderViewTable`.
- * @type {(file)=>any}
+ * How many things are shown each page in the table rendered by
+ *  `renderViewTable`.
  */
-const TABLE_SORT = (file) => file.name;
+const THINGS_PER_PAGE = 20;
+
+/**
+ * A dictionary of callbacks where each key is a name and each value is a
+ *  callback that takes a Dataview plugin's file and returns something sortable
+ *  in order to sort the thing tables rendered by `renderViewTable`.
+ * The first entry in this dictionary is the default sort.
+ * Table columns are included in this dictionary but can be overwritten by
+ *  using the same key, and deleted if the value is undefined.
+ * @type {{ [sort_name: string]: ((file)=>any) | undefined }}
+ */
+const TABLE_SORTS = {
+  Name: (file) => file.name,
+  "": undefined,
+};
 /**
  * A dictionary of callbacks where each key is a column name and each callback
  *  takes a Dataview plugin's file and returns what is rendered on the column
  *  of thing tables rendered by `renderViewTable`.
- * @type {{ [column_name: string]: ((file)=>string) }}
+ * @type {{ [column_name: string]: (file)=>string }}
  */
 const TABLE_COLUMNS = {
   "": (file) => `![|16x16](${file.icon})`,
@@ -193,15 +244,23 @@ module.exports = {
   THINGS_PATH,
   ADD_THING_BUTTON_TEXT,
   NEW_THING_NAME,
+  PINNED_VIEW_NAME_PREFIX,
+  THINGS_PER_PAGE,
+  SORTING_LABEL_TEXT,
+  THINGS_PER_PAGE_LABEL_TEXT,
+  PAGE_SELECTION_LABEL_TEXT,
+  PREVIOUS_PAGE_BUTTON_TEXT,
+  NEXT_PAGE_BUTTON_TEXT,
+  ASCENDING_SUFFIX,
+  DESCENDING_SUFFIX,
   RENDER_ICON_LINK_PROPERTY,
   RENDER_ICON_WIDTH,
   RENDER_ICON_HEIGHT,
   MERGE_VIEWS_IN_LIST,
   REPLACE_VIEW_SPACES_WITH_SLASHES,
   PINNED_VIEW_NAMES,
-  PINNED_VIEW_NAME_PREFIX,
   CALCULATE_SUBFOLDER_UNINITIATED,
-  TABLE_SORT,
+  TABLE_SORTS,
   TABLE_COLUMNS,
   CUSTOM_VIEWS,
   CUSTOM_TAGS,
